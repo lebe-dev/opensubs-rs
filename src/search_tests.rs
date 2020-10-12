@@ -6,9 +6,7 @@ mod search_tests {
     use log4rs::filter::threshold::ThresholdFilter;
     use log::LevelFilter;
 
-    use crate::auth::auth::login_to_opensubs;
-    use crate::BASE_URL;
-    use crate::search::search::search_by_mask;
+    use crate::{BASE_URL, login, search_by_mask};
 
     #[ignore]
     #[tokio::test]
@@ -23,8 +21,8 @@ mod search_tests {
             .build()
             .unwrap();
 
-        match login_to_opensubs(&client, BASE_URL,
-                                "CHANGE-ME", "CHANGE-ME").await {
+        match login(&client, BASE_URL,
+                    "CHANGE-ME", "CHANGE-ME").await {
             Ok(_) => {
                 match search_by_mask(&client, BASE_URL,
                                      "Midnight Gospel", "rus").await {
