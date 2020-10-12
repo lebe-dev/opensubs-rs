@@ -94,7 +94,7 @@ pub async fn login(client: &reqwest::Client, base_url: &str,
 ///
 /// let client: reqwest::Client = reqwest::Client::builder()
 ///                                     .cookie_store(true)
-///                                     .build().unwrap();
+///                                     .build()?;
 /// // login operation here
 ///
 /// match search_by_mask(&client, BASE_URL, "Midnight Gospel S01", "rus,gle").await {
@@ -122,15 +122,21 @@ pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
             debug!("server response code: {}", status.as_str());
 
             if status == reqwest::StatusCode::OK {
-                let response_text = resp.text().await.unwrap();
+                match  resp.text().await {
+                    Ok(response_text) => {
+                        trace!("---[SEARCH RESULTS]---");
+                        trace!("{}", &response_text);
+                        trace!("---[/SEARCH RESULTS]---");
 
-                trace!("---[SEARCH RESULTS]---");
-                trace!("{}", &response_text);
-                trace!("---[/SEARCH RESULTS]---");
-
-                match get_search_results(&response_text) {
-                    Ok(search_results) => Ok(search_results),
-                    Err(_) => Err(OperationError::Error)
+                        match get_search_results(&response_text) {
+                            Ok(search_results) => Ok(search_results),
+                            Err(_) => Err(OperationError::Error)
+                        }
+                    }
+                    Err(e) => {
+                        error!("unable to get response text: {}", e);
+                        Err(OperationError::Error)
+                    }
                 }
 
             } else {
