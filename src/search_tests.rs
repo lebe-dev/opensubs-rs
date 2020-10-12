@@ -26,7 +26,8 @@ mod search_tests {
         match login(&client, BASE_URL,
                     "CHANGE-ME", "CHANGE-ME").await {
             Ok(_) => {
-                match search_by_mask(&client, BASE_URL, "Midnight Gospel").await {
+                match search_by_mask(&client, BASE_URL,
+                                     "Midnight Gospel", "rus").await {
                     Ok(search_results) => {
                         assert!(search_results.len() > 0);
                         println!("{:?}", &search_results);

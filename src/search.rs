@@ -3,11 +3,17 @@ pub mod search {
     use crate::error::error::OperationError;
     use crate::parser::parser::get_search_results;
 
+    /**
+            sub_langs - subtitle languages. Example: rus,ara
+            (Russian, Arabic)
+            */
     pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
-                          mask: &str) -> Result<SubtitleSearchResults, Box<OperationError>> {
+                                mask: &str, sub_langs: &str) ->
+                                                Result<SubtitleSearchResults, Box<OperationError>> {
         info!("search subtitles by mask '{}'", mask);
+        info!("language '{}'", sub_langs);
 
-        let request_url = get_request_url(base_url, mask);
+        let request_url = get_request_url(base_url, mask, sub_langs);
 
         debug!("request url:");
         debug!("{}", request_url);
@@ -41,12 +47,12 @@ pub mod search {
         }
     }
 
-    fn get_request_url(base_url: &str, search_mask: &str) -> String {
+    fn get_request_url(base_url: &str, search_mask: &str, language: &str) -> String {
         let sanitized_mask = search_mask.replace(" ", "+");
-        format!("{}/ru/search2?MovieName={}&id=8&action=search&SubLanguageID=rus&SubLanguageID=rus\
+        format!("{}/ru/search2?MovieName={}&id=8&action=search&SubLanguageID=rus&SubLanguageID={}\
                 &Season=&Episode=&SubSumCD=&Genre=&MovieByteSize=&MovieLanguage=&\
                 MovieImdbRatingSign=1&MovieImdbRating=&MovieCountry=&MovieYearSign=1&\
                 MovieYear=&MovieFPS=&SubFormat=&SubAddDate=&Uploader=&IDUser=&Translator=&\
-                IMDBID=&MovieHash=&IDMovie=", base_url, sanitized_mask)
+                IMDBID=&MovieHash=&IDMovie=", base_url, sanitized_mask, language)
     }
 }
