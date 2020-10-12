@@ -4,12 +4,12 @@ pub mod search {
     use crate::parser::parser::get_search_results;
 
     /**
-            sub_langs - subtitle languages. Example: rus,ara
-            (Russian, Arabic)
-            */
+                sub_langs - subtitle languages. Example: rus,ara
+                (Russian, Arabic)
+                */
     pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
                                 mask: &str, sub_langs: &str) ->
-                                                Result<SubtitleSearchResults, Box<OperationError>> {
+                                                Result<SubtitleSearchResults, OperationError> {
         info!("search subtitles by mask '{}'", mask);
         info!("language '{}'", sub_langs);
 
@@ -32,17 +32,17 @@ pub mod search {
 
                     match get_search_results(&response_text) {
                         Ok(search_results) => Ok(search_results),
-                        Err(_) => Err(Box::from(OperationError::Error))
+                        Err(_) => Err(OperationError::Error)
                     }
 
                 } else {
                     error!("error, response code was {}", status);
-                    Err(Box::from(OperationError::Error))
+                    Err(OperationError::Error)
                 }
             }
             Err(e) => {
                 error!("subtitles search error: {}", e);
-                Err(Box::from(OperationError::Error))
+                Err(OperationError::Error)
             }
         }
     }
