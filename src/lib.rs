@@ -92,25 +92,8 @@ pub async fn login(client: &reqwest::Client, base_url: &str,
 
 /// Search subtitles by mask
 ///
-/// You must provide `mask` and `sub_langs`.
+/// You must provide `mask` and `sub_langs`, subtitle languages. Example: rus,ara (Russian, Arabic)
 ///
-/// # Examples
-/// ```
-/// use opensubs_rs::{search_by_mask, BASE_URL};
-///
-/// let client: reqwest::Client = reqwest::Client::builder()
-///                                     .cookie_store(true)
-///                                     .build()?;
-/// // login operation here
-///
-/// match search_by_mask(&client, BASE_URL, "Midnight Gospel S01", "rus,gle").await {
-///     Ok(search_results) => {}
-///     Err(e) => {}
-/// }
-/// ```
-/// Search subtitles by `mask
-    /// `sub_langs` - subtitle languages. Example: rus,ara
-    ///                 (Russian, Arabic)
 pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
                             mask: &str, sub_langs: &str) ->
                             Result<SubtitleSearchResults, OperationError> {
@@ -128,7 +111,7 @@ pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
             debug!("server response code: {}", status.as_str());
 
             if status == reqwest::StatusCode::OK {
-                match  resp.text().await {
+                match resp.text().await {
                     Ok(response_text) => {
                         trace!("---[SEARCH RESULTS]---");
                         trace!("{}", &response_text);
@@ -145,10 +128,7 @@ pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
                     }
                 }
 
-            } else {
-                error!("error, response code was {}", status);
-                Err(OperationError::Error)
-            }
+            } else { Err(OperationError::Error) }
         }
         Err(e) => {
             error!("subtitles search error: {}", e);
