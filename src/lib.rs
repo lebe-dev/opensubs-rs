@@ -48,29 +48,35 @@ pub async fn login(client: &reqwest::Client, base_url: &str,
         .header("Content-Type", "application/x-www-form-urlencoded")
         .form(&params)
         .send().await {
-        Ok(resp) => {
-            let rsp_header = resp.headers();
+        Ok(response) => {
+            let response_header = response.headers();
 
-            debug!("response Header: {:?}", rsp_header);
+            debug!("response Header: {:?}", response_header);
 
-            let cookies = resp.cookies();
+            let cookies = response.cookies();
 
             for cookie in cookies {
                 debug!("cookie: '{}' value '{}'", cookie.name(), cookie.value());
             }
 
-            let status: reqwest::StatusCode = resp.status();
+            let status: reqwest::StatusCode = response.status();
 
             debug!("status code '{}'", status);
 
             if status == reqwest::StatusCode::OK {
-                let html = resp.text().await.unwrap();
+                match response.text().await {
+                    Ok(html) => {
+                        trace!("---[AUTH RESPONSE]---");
+                        trace!("{}", &html);
+                        trace!("---[/AUTH RESPONSE]---");
 
-                trace!("---[AUTH RESPONSE]---");
-                trace!("{}", &html);
-                trace!("---[/AUTH RESPONSE]---");
-
-                Ok(())
+                        Ok(())
+                    }
+                    Err(e) => {
+                        error!("unable to get response text: '{}'", e);
+                        Err(Box::from(OperationError::Error))
+                    }
+                }
 
             } else {
                 error!("error, response code was {}", status);
