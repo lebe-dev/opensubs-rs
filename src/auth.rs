@@ -8,6 +8,12 @@ pub mod auth {
     const REMEMBER_PROPERTY: &str = "remember";
 
     /// Login to opensubtitles.org
+    ///
+    /// # Examples
+    /// ```
+    /// use opensubs_rs::BASE_URL;
+    /// login_to_opensubs(&client, BASE_URL, "username", "supppaPazzWourd");
+    /// ```
     pub async fn login_to_opensubs(client: &reqwest::Client, base_url: &str,
                                    login: &str, password: &str) -> Result<(), Box<OperationError>> {
         info!("login to '{}'", base_url);
