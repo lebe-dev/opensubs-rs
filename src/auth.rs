@@ -1,5 +1,4 @@
 pub mod auth {
-    use crate::types::types::OperationResult;
     use crate::error::error::OperationError;
 
     const A_PROPERTY: &str = "a";
@@ -20,7 +19,7 @@ pub mod auth {
             (REMEMBER_PROPERTY, "on"),
         ];
 
-        let url = format!("{}/ru/login/redirect-ru", base_url);
+        let url = format!("{}/ru/login/redirect-%7Cru", base_url);
 
         match client.post(&url)
             .header("Content-Type", "application/x-www-form-urlencoded")
@@ -39,7 +38,9 @@ pub mod auth {
 
                 let status: reqwest::StatusCode = resp.status();
 
-                if status == reqwest::StatusCode::FOUND {
+                debug!("status code '{}'", status);
+
+                if status == reqwest::StatusCode::OK {
                     let html = resp.text().await.unwrap();
 
                     trace!("---[AUTH RESPONSE]---");
