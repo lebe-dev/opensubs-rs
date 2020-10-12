@@ -7,8 +7,9 @@ pub mod auth {
     const PASSWORD_PROPERTY: &str = "password";
     const REMEMBER_PROPERTY: &str = "remember";
 
-    pub async fn login(client: &reqwest::Client, base_url: &str,
-                       login: &str, password: &str) -> Result<(), Box<OperationError>> {
+    /// Login to opensubtitles.org
+    pub async fn login_to_opensubs(client: &reqwest::Client, base_url: &str,
+                                   login: &str, password: &str) -> Result<(), Box<OperationError>> {
         info!("login to '{}'", base_url);
 
         let params = [
