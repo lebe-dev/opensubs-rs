@@ -79,8 +79,18 @@ pub mod parser {
 
                                             if series_pattern.is_match(series_info) {
                                                 let groups = series_pattern.captures_iter(series_info).next().unwrap();
-                                                season = String::from(&groups[1]).parse().unwrap();
-                                                episode = String::from(&groups[2]).parse().unwrap();
+
+                                                match String::from(&groups[1]).parse() {
+                                                    Ok(value) => season = value,
+                                                    Err(e) =>
+                                                        error!("unable to get season value: {}", e)
+                                                }
+
+                                                match String::from(&groups[2]).parse() {
+                                                    Ok(value) => episode = value,
+                                                    Err(e) =>
+                                                        error!("unable to get episode value: {}", e)
+                                                }
                                             }
                                         }
                                         None => debug!("no series info found")
@@ -98,9 +108,7 @@ pub mod parser {
 
                                     row_index += 1;
                                 }
-                                None => {
-                                    error!("unable to get column with title")
-                                }
+                                None => error!("unable to get column with title")
                             }
                         }
                     }
