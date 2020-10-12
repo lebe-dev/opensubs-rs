@@ -1,10 +1,11 @@
 pub mod parser {
+    use regex::Regex;
+    use scraper::{Html, Selector};
+
     use crate::domain::domain::{SubtitleSearchResultItem, SubtitleSearchResults};
-    use crate::types::types::OperationResult;
-    use scraper::{Selector, Html};
     use crate::error::error::OperationError;
     use crate::strip::strip::strip_html_tags;
-    use regex::Regex;
+    use crate::types::types::OperationResult;
 
     pub fn get_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
         info!("get search results from html");
@@ -14,6 +15,7 @@ pub mod parser {
 
         let results_table_selector = Selector::parse("#search_results").unwrap();
         let title_col_selector = Selector::parse("td").unwrap();
+        let title_details_url_selector = Selector::parse("a").unwrap();
 
         let series_pattern = Regex::new("\\[S(\\d{1,2})E(\\d{1,2})\\]").unwrap();
         let year_pattern = Regex::new(".*\\((\\d{4})\\).*").unwrap();
@@ -35,8 +37,20 @@ pub mod parser {
                             trace!("{}", row.html());
                             trace!("---[/ROW]---");
 
+                            let mut details_page_url: &str = "";
+
                             match row.select(&title_col_selector).skip(1).next() {
                                 Some(title_col) => {
+                                    match title_col.select(&title_details_url_selector).next() {
+                                        Some(a_element) => {
+                                            match a_element.value().attr("href") {
+                                                Some(href) => details_page_url = href,
+                                                None => {}
+                                            }
+                                        }
+                                        None => {}
+                                    }
+
                                     let title_row = strip_html_tags(&title_col.inner_html());
 
                                     let title_parts: Vec<&str> = title_row.split("\n").collect();
@@ -75,6 +89,7 @@ pub mod parser {
                                     let search_result_item = SubtitleSearchResultItem {
                                         index: row_index,
                                         title: merged_title.to_string(),
+                                        details_url: details_page_url.to_string(),
                                         season,
                                         episode
                                     };

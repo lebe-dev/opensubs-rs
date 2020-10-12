@@ -9,6 +9,11 @@ pub mod domain {
 
         pub title: String,
 
+        /**
+        Relative url to movie page
+        */
+        pub details_url: String,
+
         pub season: u16,
         pub episode: u16
     }

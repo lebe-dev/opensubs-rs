@@ -5,12 +5,13 @@ mod parser_tests {
 
     use encoding::{DecoderTrap, Encoding};
     use encoding::all::WINDOWS_1251;
-    use crate::parser::parser::get_search_results;
     use log4rs::append::file::FileAppender;
+    use log4rs::config::{Appender, Config, Logger, Root};
     use log4rs::encode::pattern::PatternEncoder;
-    use log::LevelFilter;
     use log4rs::filter::threshold::ThresholdFilter;
-    use log4rs::config::{Appender, Root, Config, Logger};
+    use log::LevelFilter;
+
+    use crate::parser::parser::get_search_results;
 
     #[test]
     fn results_should_contain_search_result_items() {
@@ -25,6 +26,7 @@ mod parser_tests {
 
                 assert_eq!(first_result.index, 1);
                 assert_eq!(first_result.title, "\"The Midnight Gospel\" Mouse of Silver (2020)");
+                assert_eq!(first_result.details_url, "https://www.opensubtitles.org/en/search/sublanguageid-rus/idmovie-924968");
             }
             Err(_) => panic!("results expected")
         }
