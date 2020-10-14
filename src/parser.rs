@@ -1,15 +1,14 @@
 pub mod parser {
     use regex::Regex;
     use scraper::{ElementRef, Html, Selector};
-    use scraper::element_ref::Select;
 
     use crate::domain::domain::{SubtitleSearchResultItem, SubtitleSearchResults};
     use crate::error::error::OperationError;
     use crate::strip::strip::strip_html_tags;
     use crate::types::types::OperationResult;
 
-    pub fn get_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
-        info!("get search results from html");
+    pub fn parse_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
+        info!("parse search results from html");
         let mut results: SubtitleSearchResults = Vec::new();
 
         let document = Html::parse_fragment(html);
@@ -22,31 +21,6 @@ pub mod parser {
 
         let mut row_index: u8 = 1;
 
-        match get_rows(&document) {
-            Ok(rows) => {
-                for row in rows {
-
-                    match get_search_item_from_row(
-                        row_index, &row, &title_col_selector,
-                        &title_details_url_selector, &year_pattern, &series_pattern
-                    ) {
-                        Ok(search_result_item) => {
-                            results.push(search_result_item);
-                            row_index += 1;
-                        },
-                        Err(e) =>
-                            error!("unable to extract search result item from row: {}", e)
-                    }
-
-                }
-
-                Ok(results)
-            }
-            Err(_) => Err(OperationError::Error)
-        }
-    }
-
-    fn get_rows(document: &Html) -> Result<&Select, OperationError> {
         let results_table_selector = Selector::parse("#search_results").unwrap();
 
         match document.select(&results_table_selector).next() {
@@ -57,9 +31,23 @@ pub mod parser {
                 match search_results_table.select(&table_body_selector).next() {
                     Some(table_body) => {
                         debug!("search results table body has been found");
-                        let rows_selector = Selector::parse("tr").unwrap();
+                        let rows_selector = Selector::parse("tr.change").unwrap();
 
-                        Ok(&table_body.select(&rows_selector))
+                        for row in table_body.select(&rows_selector) {
+                            match get_search_item_from_row(
+                                row_index, &row, &title_col_selector,
+                                &title_details_url_selector, &year_pattern, &series_pattern
+                            ) {
+                                Ok(search_result_item) => {
+                                    results.push(search_result_item);
+                                    row_index += 1;
+                                },
+                                Err(e) =>
+                                    error!("unable to extract search result item from row: {}", e)
+                            }
+                        }
+
+                        Ok(results)
                     }
                     None => {
                         Err(OperationError::HtmlParseError)
@@ -81,14 +69,19 @@ pub mod parser {
         trace!("{}", row.html());
         trace!("---[/ROW]---");
 
-        let mut result: Result<SubtitleSearchResultItem, OperationError> = Err(OperationError::Error);
+        let mut result: OperationResult<SubtitleSearchResultItem> = Err(OperationError::Error);
 
         let mut details_page_url: &str = "";
 
-        match row.select(&title_col_selector).skip(1).next() {
+        let mut title: String = String::new();
+
+        match row.select(&title_col_selector).next() {
             Some(title_col) => {
                 match title_col.select(&title_details_url_selector).next() {
                     Some(a_element) => {
+                        title = a_element.text().next().unwrap()
+                                         .replace("\n", " ").to_string();
+
                         match a_element.value().attr("href") {
                             Some(href) => details_page_url = href,
                             None => {}
@@ -98,59 +91,49 @@ pub mod parser {
                 }
 
                 let title_row = strip_html_tags(&title_col.inner_html());
+                debug!("TITLE ROW: '{}'", title_row);
 
-                let title_parts: Vec<&str> = title_row.split("\n").collect();
+                if title_row.len() > 1 {
+                    let mut year = String::new();
 
-                let title = title_parts.get(0).unwrap();
-                let year_part = *title_parts.get(1).unwrap();
+                    match year_pattern.find(&title_row) {
+                        Some(year_match) => {
+                            year = title_row[year_match.start()+1..year_match.end()-1].to_string();
+                        }
+                        None => {}
+                    }
 
-                let mut year = String::from(year_part);
+                    info!("year '{}'", year);
 
-                if year_pattern.is_match(year_part) {
-                    let groups = year_pattern.captures_iter(year_part).next().unwrap();
+                    let mut season: u8 = 0;
+                    let mut episode: u16 = 0;
 
-                    year = String::from(&groups[1]);
-                }
+                    if series_pattern.is_match(&title_row) {
+                        let groups = series_pattern.captures_iter(&title_row).next().unwrap();
 
-                let merged_title = format!("{} ({})", title, year);
+                        match String::from(&groups[1]).parse() {
+                            Ok(value) => season = value,
+                            Err(e) =>
+                                error!("unable to get season value: {}", e)
+                        }
 
-                info!("year '{}'", year_part);
-
-                let mut season: u8 = 0;
-                let mut episode: u16 = 0;
-
-                match title_parts.get(2) {
-                    Some(series_info) => {
-                        info!("series info '{}'", series_info);
-
-                        if series_pattern.is_match(series_info) {
-                            let groups = series_pattern.captures_iter(series_info).next().unwrap();
-
-                            match String::from(&groups[1]).parse() {
-                                Ok(value) => season = value,
-                                Err(e) =>
-                                    error!("unable to get season value: {}", e)
-                            }
-
-                            match String::from(&groups[2]).parse() {
-                                Ok(value) => episode = value,
-                                Err(e) =>
-                                    error!("unable to get episode value: {}", e)
-                            }
+                        match String::from(&groups[2]).parse() {
+                            Ok(value) => episode = value,
+                            Err(e) =>
+                                error!("unable to get episode value: {}", e)
                         }
                     }
-                    None => debug!("no series info found")
+
+                    let search_result_item = SubtitleSearchResultItem {
+                        index: row_index,
+                        title,
+                        details_url: details_page_url.to_string(),
+                        season,
+                        episode
+                    };
+
+                    result = Ok(search_result_item);
                 }
-
-                let search_result_item = SubtitleSearchResultItem {
-                    index: row_index,
-                    title: merged_title.to_string(),
-                    details_url: details_page_url.to_string(),
-                    season,
-                    episode
-                };
-
-                result = Ok(search_result_item);
             }
             None => error!("unable to get column with title")
         }

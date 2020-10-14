@@ -11,60 +11,28 @@ mod parser_tests {
     use log4rs::filter::threshold::ThresholdFilter;
     use log::LevelFilter;
 
-    use crate::parser::parser::get_search_results;
+    use crate::parser::parser::parse_search_results;
 
     #[test]
     fn results_should_contain_search_result_items() {
+        let logging_config = get_logging_config(LevelFilter::Debug);
+        log4rs::init_config(logging_config).unwrap();
         let content = get_html_content("series-search-results.html");
 
-        match get_search_results(&content) {
+        match parse_search_results(&content) {
             Ok(search_results) => {
-                assert_eq!(search_results.len(), 8);
+                println!("{:?}", search_results);
+
+                assert_eq!(search_results.len(), 40);
 
                 let first_result = search_results.first()
                                                 .expect("unable to get first search result");
 
                 assert_eq!(first_result.index, 1);
-                assert_eq!(first_result.title, "\"The Midnight Gospel\" Mouse of Silver (2020)");
-                assert_eq!(first_result.details_url, "https://www.opensubtitles.org/en/search/sublanguageid-rus/idmovie-924968");
-            }
-            Err(_) => panic!("results expected")
-        }
-    }
-
-    #[test]
-    fn series_info_should_be_extracted() {
-        let content = get_html_content("series-search-results.html");
-
-        match get_search_results(&content) {
-            Ok(search_results) => {
-                let first_result = search_results.first()
-                    .expect("unable to get first search result");
-
-                assert_eq!(first_result.season, 1);
-                assert_eq!(first_result.episode, 8);
-            }
-            Err(_) => panic!("results expected")
-        }
-    }
-
-    #[test]
-    fn movie_titles_should_be_extracted() {
-        let logging_config = get_logging_config(LevelFilter::Debug);
-        log4rs::init_config(logging_config).unwrap();
-        let content = get_html_content("multi-search-results.html");
-
-        match get_search_results(&content) {
-            Ok(search_results) => {
-                let first_result = search_results.first()
-                    .expect("unable to get first search result");
-
-                assert_eq!(first_result.title, "5ive Days to Midnight (2004)");
-
-                let second_result = search_results.get(1)
-                    .expect("unable to get second search result");
-
-                assert_eq!(second_result.title, "Midnight Sun (2018)");
+                assert_eq!(first_result.title, "\"Adventure Time\" Bonnibel Bubblegum (2017)");
+                assert_eq!(first_result.details_url, "https://www.opensubtitles.org/en/subtitles/7863206/adventure-time-bonnibel-bubblegum-ru");
+                assert_eq!(first_result.season, 10);
+                assert_eq!(first_result.episode, 4);
             }
             Err(_) => panic!("results expected")
         }
