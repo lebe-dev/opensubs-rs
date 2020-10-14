@@ -7,7 +7,7 @@ pub mod parser {
     use crate::strip::strip::strip_html_tags;
     use crate::types::types::OperationResult;
 
-    pub fn parse_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
+    pub fn parse_series_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
         info!("parse search results from html");
         let mut results: SubtitleSearchResults = Vec::new();
 

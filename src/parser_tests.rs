@@ -11,7 +11,7 @@ mod parser_tests {
     use log4rs::filter::threshold::ThresholdFilter;
     use log::LevelFilter;
 
-    use crate::parser::parser::parse_search_results;
+    use crate::parser::parser::parse_series_search_results;
 
     #[test]
     fn results_should_contain_search_result_items() {
@@ -19,7 +19,7 @@ mod parser_tests {
         log4rs::init_config(logging_config).unwrap();
         let content = get_html_content("series-search-results.html");
 
-        match parse_search_results(&content) {
+        match parse_series_search_results(&content) {
             Ok(search_results) => {
                 println!("{:?}", search_results);
 
