@@ -11,7 +11,7 @@ mod parser_tests {
     use log4rs::filter::threshold::ThresholdFilter;
     use log::LevelFilter;
 
-    use crate::parser::parser::{get_sub_download_url_from_episode_page, parse_series_search_results};
+    use crate::parser::parser::{get_sub_download_url_from_page, parse_series_search_results};
 
     #[test]
     fn results_should_contain_search_result_items() {
@@ -44,7 +44,7 @@ mod parser_tests {
 
         let base_url = "https://www.opensubtitles.org";
 
-        match get_sub_download_url_from_episode_page(&content, base_url) {
+        match get_sub_download_url_from_page(&content, base_url) {
             Ok(download_url) => {
                 match download_url {
                     Some(url) => {
