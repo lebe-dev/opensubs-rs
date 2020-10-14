@@ -61,9 +61,9 @@ pub mod parser {
     }
 
     pub fn get_sub_download_url_from_episode_page(html: &str, base_url: &str) -> OptionResult<String> {
-        let mut result: OptionResult<String> = Ok(None);
+        let result: OptionResult<String>;
 
-        let a_element_selector = Selector::parse("a.bt-dwl").unwrap();
+        let a_element_selector = Selector::parse("a.bt-dwl.external").unwrap();
 
         let document = Html::parse_fragment(html);
 
