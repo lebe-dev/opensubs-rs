@@ -5,7 +5,7 @@ pub mod parser {
     use crate::domain::domain::{SubtitleSearchResultItem, SubtitleSearchResults};
     use crate::error::error::OperationError;
     use crate::strip::strip::strip_html_tags;
-    use crate::types::types::OperationResult;
+    use crate::types::types::{OperationResult, OptionResult};
 
     pub fn parse_series_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
         info!("parse search results from html");
@@ -58,6 +58,35 @@ pub mod parser {
                 Err(OperationError::HtmlParseError)
             }
         }
+    }
+
+    pub fn get_sub_download_url_from_episode_page(html: &str, base_url: &str) -> OptionResult<String> {
+        let mut result: OptionResult<String> = Ok(None);
+
+        let a_element_selector = Selector::parse("a.bt-dwl").unwrap();
+
+        let document = Html::parse_fragment(html);
+
+        match document.select(&a_element_selector).next() {
+            Some(a_element) => {
+                match a_element.value().attr("href") {
+                    Some(href) => {
+                        let url = format!("{}{}", base_url, href);
+                        result = Ok(Some(url))
+                    }
+                    None => {
+                        warn!("<a> tag doesn't have 'href' attribute. unexpected html");
+                        result = Err(OperationError::HtmlParseError)
+                    }
+                }
+            }
+            None => {
+                error!("unable to parse subtitle download url");
+                result = Err(OperationError::HtmlParseError)
+            }
+        }
+
+        return result
     }
 
     fn get_search_item_from_row(row_index: u8, row: &ElementRef,
