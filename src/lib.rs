@@ -4,8 +4,8 @@ extern crate log4rs;
 
 use crate::domain::domain::SubtitleSearchResults;
 use crate::error::error::OperationError;
-use crate::parser::parser::parse_series_search_results;
-use crate::types::types::OperationResult;
+use crate::parser::parser::{get_sub_download_url_from_episode_page, parse_series_search_results};
+use crate::types::types::{OperationResult, OptionResult};
 
 mod domain;
 mod parser;
@@ -117,6 +117,42 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
 
                         match parse_series_search_results(&response_text) {
                             Ok(search_results) => Ok(search_results),
+                            Err(_) => Err(OperationError::Error)
+                        }
+                    }
+                    Err(e) => {
+                        error!("unable to get response text: {}", e);
+                        Err(OperationError::Error)
+                    }
+                }
+
+            } else { Err(OperationError::Error) }
+        }
+        Err(e) => {
+            error!("subtitles search error: {}", e);
+            Err(OperationError::Error)
+        }
+    }
+}
+
+pub async fn get_episode_download_url(client: &reqwest::Client,
+                                base_url: &str, episode_page_url: &str) -> OptionResult<String> {
+    info!("get episode download url, episode page '{}'", episode_page_url);
+
+    match client.get(episode_page_url).send().await {
+        Ok(resp) => {
+            let status: reqwest::StatusCode = resp.status();
+            debug!("server response code: {}", status.as_str());
+
+            if status == reqwest::StatusCode::OK {
+                match resp.text().await {
+                    Ok(response_text) => {
+                        trace!("---[SEARCH RESULTS]---");
+                        trace!("{}", &response_text);
+                        trace!("---[/SEARCH RESULTS]---");
+
+                        match get_sub_download_url_from_episode_page(&response_text, base_url) {
+                            Ok(download_url) => Ok(download_url),
                             Err(_) => Err(OperationError::Error)
                         }
                     }
