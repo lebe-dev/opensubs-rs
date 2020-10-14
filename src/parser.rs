@@ -1,6 +1,7 @@
 pub mod parser {
     use regex::Regex;
     use scraper::{ElementRef, Html, Selector};
+    use scraper::element_ref::Select;
 
     use crate::domain::domain::{SubtitleSearchResultItem, SubtitleSearchResults};
     use crate::error::error::OperationError;
@@ -13,14 +14,40 @@ pub mod parser {
 
         let document = Html::parse_fragment(html);
 
-        let results_table_selector = Selector::parse("#search_results").unwrap();
         let title_col_selector = Selector::parse("td").unwrap();
         let title_details_url_selector = Selector::parse("a").unwrap();
 
         let series_pattern = Regex::new("\\[S(\\d{1,2})E(\\d{1,2})\\]").unwrap();
         let year_pattern = Regex::new(".*\\((\\d{4})\\).*").unwrap();
 
-        let mut row_index: u16 = 1;
+        let mut row_index: u8 = 1;
+
+        match get_rows(&document) {
+            Ok(rows) => {
+                for row in rows {
+
+                    match get_search_item_from_row(
+                        row_index, &row, &title_col_selector,
+                        &title_details_url_selector, &year_pattern, &series_pattern
+                    ) {
+                        Ok(search_result_item) => {
+                            results.push(search_result_item);
+                            row_index += 1;
+                        },
+                        Err(e) =>
+                            error!("unable to extract search result item from row: {}", e)
+                    }
+
+                }
+
+                Ok(results)
+            }
+            Err(_) => Err(OperationError::Error)
+        }
+    }
+
+    fn get_rows(document: &Html) -> Result<&Select, OperationError> {
+        let results_table_selector = Selector::parse("#search_results").unwrap();
 
         match document.select(&results_table_selector).next() {
             Some(search_results_table) => {
@@ -32,35 +59,20 @@ pub mod parser {
                         debug!("search results table body has been found");
                         let rows_selector = Selector::parse("tr").unwrap();
 
-                        for row in table_body.select(&rows_selector) {
-
-                            match get_search_item_from_row(
-                                row_index, &row, &title_col_selector,
-                                &title_details_url_selector, &year_pattern, &series_pattern
-                            ) {
-                                Ok(search_result_item) => {
-                                    results.push(search_result_item);
-                                    row_index += 1;
-                                },
-                                Err(e) =>
-                                    error!("unable to extract search result item from row: {}", e)
-                            }
-
-                        }
+                        Ok(&table_body.select(&rows_selector))
                     }
-                    None => error!("unable to find table body")
+                    None => {
+                        Err(OperationError::HtmlParseError)
+                    }
                 }
-
-                Ok(results)
             }
             None => {
-                error!("unable to get search results table");
                 Err(OperationError::HtmlParseError)
             }
         }
     }
 
-    fn get_search_item_from_row(row_index: u16, row: &ElementRef,
+    fn get_search_item_from_row(row_index: u8, row: &ElementRef,
                                 title_col_selector: &Selector,
                                 title_details_url_selector: &Selector,
                                 year_pattern: &Regex, series_pattern: &Regex) ->
@@ -104,7 +116,7 @@ pub mod parser {
 
                 info!("year '{}'", year_part);
 
-                let mut season: u16 = 0;
+                let mut season: u8 = 0;
                 let mut episode: u16 = 0;
 
                 match title_parts.get(2) {

@@ -5,7 +5,7 @@ pub mod domain {
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct SubtitleSearchResultItem {
-        pub index: u16,
+        pub index: u8,
 
         pub title: String,
 
@@ -14,7 +14,7 @@ pub mod domain {
         */
         pub details_url: String,
 
-        pub season: u16,
+        pub season: u8,
         pub episode: u16
     }
 }
