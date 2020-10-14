@@ -4,7 +4,7 @@ extern crate log4rs;
 
 use crate::domain::domain::SubtitleSearchResults;
 use crate::error::error::OperationError;
-use crate::parser::parser::{get_sub_download_url_from_episode_page, parse_series_search_results};
+use crate::parser::parser::{get_sub_download_url_from_page, parse_series_search_results};
 use crate::types::types::{OperationResult, OptionResult};
 
 mod domain;
@@ -135,11 +135,11 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
     }
 }
 
-pub async fn get_episode_download_url(client: &reqwest::Client,
-                                base_url: &str, episode_page_url: &str) -> OptionResult<String> {
-    info!("get episode download url, episode page '{}'", episode_page_url);
+pub async fn get_download_url_from_page(client: &reqwest::Client,
+                                        base_url: &str, page_url: &str) -> OptionResult<String> {
+    info!("get subtitles download url from page '{}'", page_url);
 
-    match client.get(episode_page_url).send().await {
+    match client.get(page_url).send().await {
         Ok(resp) => {
             let status: reqwest::StatusCode = resp.status();
             debug!("server response code: {}", status.as_str());
@@ -151,7 +151,7 @@ pub async fn get_episode_download_url(client: &reqwest::Client,
                         trace!("{}", &response_text);
                         trace!("---[/SEARCH RESULTS]---");
 
-                        match get_sub_download_url_from_episode_page(&response_text, base_url) {
+                        match get_sub_download_url_from_page(&response_text, base_url) {
                             Ok(download_url) => Ok(download_url),
                             Err(_) => Err(OperationError::Error)
                         }
@@ -165,7 +165,7 @@ pub async fn get_episode_download_url(client: &reqwest::Client,
             } else { Err(OperationError::Error) }
         }
         Err(e) => {
-            error!("subtitles search error: {}", e);
+            error!("url get error: {}", e);
             Err(OperationError::Error)
         }
     }
