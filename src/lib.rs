@@ -4,7 +4,7 @@ extern crate log4rs;
 
 use crate::domain::domain::SubtitleSearchResults;
 use crate::error::error::OperationError;
-use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_series_search_results};
+use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_search_results};
 use crate::types::types::{OperationResult, OptionResult};
 
 pub mod domain;
@@ -29,7 +29,7 @@ pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
 
     fetch_and_parse(
         client, &request_url,
-        parse_series_search_results,
+        parse_search_results,
         html_parse_error_func_with_two_args
     ).await
 }
@@ -45,7 +45,7 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
 
     fetch_and_parse(
         client, &request_url,
-        parse_series_search_results, html_parse_error_func_with_two_args
+        parse_search_results, html_parse_error_func_with_two_args
     ).await
 }
 
@@ -63,7 +63,7 @@ pub async fn search_serial_episode(client: &reqwest::Client, base_url: &str,
 
     fetch_and_parse(
         client, &request_url,
-        parse_series_search_results, parse_episode_page
+        parse_search_results, parse_episode_page
     ).await
 }
 

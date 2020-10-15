@@ -2,14 +2,14 @@
 mod parser_tests {
     use log::LevelFilter;
 
-    use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_series_search_results};
+    use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_search_results};
     use crate::test_utils::test_utils::{get_html_content, get_logging_config};
 
     #[test]
     fn results_should_contain_search_result_items() {
         let content = get_html_content("series-search-results.html");
 
-        match parse_series_search_results(&content) {
+        match parse_search_results(&content) {
             Ok(search_results) => {
                 println!("{:?}", search_results);
 

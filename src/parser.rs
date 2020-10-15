@@ -83,8 +83,8 @@ pub mod parser {
         }
     }
 
-    pub fn parse_series_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
-        info!("parse series search results from html");
+    pub fn parse_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
+        info!("parse search results from html");
         let mut results: SubtitleSearchResults = Vec::new();
 
         let document = Html::parse_fragment(html);
