@@ -154,7 +154,7 @@ fn get_serial_season_search_url(base_url: &str, search_mask: &str,
 async fn fetch_and_parse<R>(client: &reqwest::Client, url: &str,
                             parser_func: impl Fn(&str) -> OperationResult<R>) -> OperationResult<R> {
     debug!("request url:");
-    debug!("{}", url);
+    debug!("'{}'", url);
 
     match client.get(url).send().await {
         Ok(resp) => {
@@ -182,7 +182,10 @@ async fn fetch_and_parse<R>(client: &reqwest::Client, url: &str,
                     }
                 }
 
-            } else { Err(OperationError::Error) }
+            } else {
+                error!("unexpected server status code: {}", status);
+                Err(OperationError::Error)
+            }
         }
         Err(e) => {
             error!("unable to get data from url: {}", e);
