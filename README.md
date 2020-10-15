@@ -4,10 +4,6 @@ Search and download subtitles from opensubtitles.org.
 
 ## Functions
 
-### login
-
-Login to opensubtitles.org with login and password.
-
 ### search_serial_season
 
 Search subtitles for serial.

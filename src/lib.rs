@@ -17,80 +17,8 @@ mod strip_tests;
 mod search_tests;
 mod test_utils;
 
-/// Opensubtitles site url
+/// Open subtitles site url
 pub const BASE_URL: &str = "https://www.opensubtitles.org";
-
-/// Login to opensubtitles.org
-///
-/// # Examples
-/// ```
-/// use opensubs_rs::{BASE_URL, login};
-///
-/// let client: reqwest::Client = reqwest::Client::builder()
-///             .cookie_store(true)
-///             .build().unwrap();
-///
-/// login(&client, BASE_URL, "username", "supppaPazzWourd");
-/// ```
-pub async fn login(client: &reqwest::Client, base_url: &str,
-                   login: &str, password: &str) -> Result<(), Box<OperationError>> {
-    info!("login to '{}'", base_url);
-
-    let params = [
-        ("a", "login"),
-        ("redirect", "/ru"),
-        ("user", login),
-        ("password", password),
-        ("remember", "on"),
-    ];
-
-    let url = format!("{}/ru/login/redirect-%7Cru", base_url);
-
-    match client.post(&url)
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .form(&params)
-        .send().await {
-        Ok(response) => {
-            let response_header = response.headers();
-
-            debug!("response Header: {:?}", response_header);
-
-            let cookies = response.cookies();
-
-            for cookie in cookies {
-                debug!("cookie: '{}' value '{}'", cookie.name(), cookie.value());
-            }
-
-            let status: reqwest::StatusCode = response.status();
-
-            debug!("status code '{}'", status);
-
-            if status == reqwest::StatusCode::OK {
-                match response.text().await {
-                    Ok(html) => {
-                        trace!("---[AUTH RESPONSE]---");
-                        trace!("{}", &html);
-                        trace!("---[/AUTH RESPONSE]---");
-
-                        Ok(())
-                    }
-                    Err(e) => {
-                        error!("unable to get response text: '{}'", e);
-                        Err(Box::from(OperationError::Error))
-                    }
-                }
-
-            } else {
-                error!("error, response code was {}", status);
-                Err(Box::from(OperationError::Authentication))
-            }
-        }
-        Err(e) => {
-            error!("authentication error, unable to connect: '{}'", e);
-            Err(Box::from(OperationError::Error))
-        }
-    }
-}
 
 pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
                                   mask: &str, sub_langs: &str, season: u8) ->
