@@ -10,7 +10,7 @@ mod search_tests {
 
     #[ignore]
     #[tokio::test]
-    async fn result_should_contain_search_results() {
+    async fn result_should_contain_series_search_results() {
         let logging_config = get_logging_config(LevelFilter::Debug);
         log4rs::init_config(logging_config).unwrap();
 
