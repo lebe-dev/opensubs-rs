@@ -4,7 +4,7 @@ extern crate log4rs;
 
 use crate::domain::domain::SubtitleSearchResults;
 use crate::error::error::OperationError;
-use crate::parser::parser::{get_sub_download_url_from_page, parse_series_search_results};
+use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_series_search_results};
 use crate::types::types::{OperationResult, OptionResult};
 
 mod domain;
@@ -29,13 +29,18 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
 
     let request_url = get_serial_season_search_url(base_url, mask, sub_langs, season);
 
-    fetch_and_parse(client, &request_url, parse_series_search_results).await
+    fetch_and_parse(
+        client, &request_url,
+        parse_series_search_results, return_html_parse_error
+    ).await
 }
 
 pub async fn get_download_url_from_page(client: &reqwest::Client,
                                         page_url: &str) -> OptionResult<String> {
     info!("get subtitles download url from page '{}'", page_url);
-    fetch_and_parse(client, &page_url, get_sub_download_url_from_page).await
+    fetch_and_parse(client, &page_url,
+                    return_html_parse_error,
+                    get_sub_download_url_from_page).await
 }
 
 fn get_serial_season_search_url(base_url: &str, search_mask: &str,
@@ -49,8 +54,11 @@ fn get_serial_season_search_url(base_url: &str, search_mask: &str,
     )
 }
 
-async fn fetch_and_parse<R>(client: &reqwest::Client, url: &str,
-                            parser_func: impl Fn(&str) -> OperationResult<R>) -> OperationResult<R> {
+async fn fetch_and_parse<R>(
+    client: &reqwest::Client, url: &str,
+    multi_option_parser: impl Fn(&str) -> OperationResult<R>,
+    single_option_parser: impl Fn(&str) -> OperationResult<R>
+) -> OperationResult<R> {
     debug!("request url:");
     debug!("'{}'", url);
 
@@ -66,12 +74,9 @@ async fn fetch_and_parse<R>(client: &reqwest::Client, url: &str,
                         trace!("{}", &response_text);
                         trace!("---[/SEARCH RESULTS]---");
 
-                        match parser_func(&response_text) {
-                            Ok(parse_results) => Ok(parse_results),
-                            Err(_) => {
-                                error!("unable to parse data");
-                                Err(OperationError::HtmlParseError)
-                            }
+                        match get_page_type(&response_text) {
+                            PageType::MultipleOptions => multi_option_parser(&response_text),
+                            PageType::SingleOption => single_option_parser(&response_text)
                         }
                     }
                     Err(e) => {
@@ -92,4 +97,7 @@ async fn fetch_and_parse<R>(client: &reqwest::Client, url: &str,
     }
 }
 
-
+fn return_html_parse_error<R>(whatever: &str) -> OperationResult<R> {
+    error!("unexpected branch: {}", whatever);
+    Err(OperationError::HtmlParseError)
+}

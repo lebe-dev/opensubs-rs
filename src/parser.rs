@@ -7,6 +7,33 @@ pub mod parser {
     use crate::strip::strip::strip_html_tags;
     use crate::types::types::{OperationResult, OptionResult};
 
+    #[derive(PartialEq, Debug)]
+    pub enum PageType {
+        /// Page contains multiple results
+        MultipleOptions,
+
+        /// Page about one movie\tv-series episode
+        SingleOption
+    }
+
+    pub fn get_page_type(html: &str) -> PageType {
+        info!("get page type");
+        let document = Html::parse_fragment(html);
+
+        let results_table_selector = Selector::parse("#search_results").unwrap();
+
+        match document.select(&results_table_selector).next() {
+            Some(_) => {
+                info!("page type: multiple options");
+                PageType::MultipleOptions
+            }
+            None => {
+                info!("page type: single option");
+                PageType::SingleOption
+            }
+        }
+    }
+
     pub fn parse_series_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
         info!("parse search results from html");
         let mut results: SubtitleSearchResults = Vec::new();

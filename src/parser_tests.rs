@@ -2,7 +2,7 @@
 mod parser_tests {
     use log::LevelFilter;
 
-    use crate::parser::parser::{get_sub_download_url_from_page, parse_series_search_results};
+    use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_series_search_results};
     use crate::test_utils::test_utils::{get_html_content, get_logging_config};
 
     #[test]
@@ -43,5 +43,17 @@ mod parser_tests {
             }
             Err(_) => panic!("results expected")
         }
+    }
+
+    #[test]
+    fn page_with_multiple_options() {
+        let content = get_html_content("series-search-results.html");
+        assert_eq!(get_page_type(&content), PageType::MultipleOptions)
+    }
+
+    #[test]
+    fn page_with_single_option() {
+        let content = get_html_content("episode-page.html");
+        assert_eq!(get_page_type(&content), PageType::SingleOption)
     }
 }
