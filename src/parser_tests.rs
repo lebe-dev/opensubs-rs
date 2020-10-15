@@ -2,7 +2,7 @@
 mod parser_tests {
     use log::LevelFilter;
 
-    use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_series_search_results};
+    use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_series_search_results};
     use crate::test_utils::test_utils::{get_html_content, get_logging_config};
 
     #[test]
@@ -29,12 +29,59 @@ mod parser_tests {
     }
 
     #[test]
-    fn parse_sub_download_url_from_episode_page() {
+    fn parse_item_from_episode_page() {
+        let content = get_html_content("season-page.html");
+
+        let page_url: &str = "abc";
+
+        match parse_episode_page(&content, page_url) {
+            Ok(results) => {
+                let item = results.first().unwrap();
+
+                assert_eq!("Adventure Time Russian S10E04", item.title);
+                assert_eq!(1, item.index);
+                assert_eq!(10, item.season);
+                assert_eq!(4, item.episode);
+                assert_eq!(page_url, item.details_url);
+            }
+            Err(_) => panic!("results expected")
+        }
+    }
+
+    #[test]
+    fn parse_item_from_episode_page_subtitles_word_should_be_removed() {
+        let content = get_html_content("season-page.html");
+
+        match parse_episode_page(&content, "xyz") {
+            Ok(results) => {
+                let item = results.first().unwrap();
+                assert_eq!("Adventure Time Russian S10E04", item.title);
+            }
+            Err(_) => panic!("results expected")
+        }
+    }
+
+    #[test]
+    fn parse_item_from_episode_page_season_and_episode_should_be_parsed_from_title() {
         let logging_config = get_logging_config(LevelFilter::Debug);
         log4rs::init_config(logging_config).unwrap();
         let content = get_html_content("season-page.html");
 
-        match get_sub_download_url_from_page(&content) {
+        match parse_episode_page(&content, "whatever") {
+            Ok(results) => {
+                let item = results.first().unwrap();
+                assert_eq!(10, item.season);
+                assert_eq!(4, item.episode);
+            }
+            Err(_) => panic!("results expected")
+        }
+    }
+
+    #[test]
+    fn parse_sub_download_url_from_episode_page() {
+        let content = get_html_content("season-page.html");
+
+        match get_sub_download_url_from_page(&content, "xyz") {
             Ok(download_url) => {
                 match download_url {
                     Some(url) => assert_eq!("/en/subtitleserve/sub/7863206", url),

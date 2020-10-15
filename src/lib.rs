@@ -4,7 +4,7 @@ extern crate log4rs;
 
 use crate::domain::domain::SubtitleSearchResults;
 use crate::error::error::OperationError;
-use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_series_search_results};
+use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_series_search_results};
 use crate::types::types::{OperationResult, OptionResult};
 
 mod domain;
@@ -31,7 +31,25 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
 
     fetch_and_parse(
         client, &request_url,
-        parse_series_search_results, return_html_parse_error
+        parse_series_search_results, html_parse_error_func_with_two_args
+    ).await
+}
+
+pub async fn search_serial_episode(client: &reqwest::Client, base_url: &str,
+                                  mask: &str, sub_langs: &str, season: u8, episode: u16) ->
+                                  OperationResult<SubtitleSearchResults> {
+    info!("search series subtitles by mask '{}'", mask);
+    info!("- season '{}'", season);
+    info!("- episode '{}'", episode);
+    info!("- sub langs '{}'", sub_langs);
+
+    let request_url = get_serial_episode_search_url(
+        base_url, mask, sub_langs, season, episode
+    );
+
+    fetch_and_parse(
+        client, &request_url,
+        parse_series_search_results, parse_episode_page
     ).await
 }
 
@@ -39,7 +57,7 @@ pub async fn get_download_url_from_page(client: &reqwest::Client,
                                         page_url: &str) -> OptionResult<String> {
     info!("get subtitles download url from page '{}'", page_url);
     fetch_and_parse(client, &page_url,
-                    return_html_parse_error,
+                    html_parse_error_func,
                     get_sub_download_url_from_page).await
 }
 
@@ -54,10 +72,21 @@ fn get_serial_season_search_url(base_url: &str, search_mask: &str,
     )
 }
 
+fn get_serial_episode_search_url(base_url: &str, search_mask: &str,
+                                 sub_langs: &str, season: u8, episode: u16) -> String {
+
+    let sanitized_mask = search_mask.replace(" ", "+");
+
+    format!(
+        "{}/en/search/sublanguageid-{}/moviename-{}/season-{}/episode-{}/SearchOnlyTVSeries-on",
+        base_url, sub_langs, sanitized_mask, season, episode
+    )
+}
+
 async fn fetch_and_parse<R>(
     client: &reqwest::Client, url: &str,
     multi_option_parser: impl Fn(&str) -> OperationResult<R>,
-    single_option_parser: impl Fn(&str) -> OperationResult<R>
+    single_option_parser: impl Fn(&str, &str) -> OperationResult<R>
 ) -> OperationResult<R> {
     debug!("request url:");
     debug!("'{}'", url);
@@ -76,7 +105,7 @@ async fn fetch_and_parse<R>(
 
                         match get_page_type(&response_text) {
                             PageType::MultipleOptions => multi_option_parser(&response_text),
-                            PageType::SingleOption => single_option_parser(&response_text)
+                            PageType::SingleOption => single_option_parser(&response_text, &url)
                         }
                     }
                     Err(e) => {
@@ -97,7 +126,13 @@ async fn fetch_and_parse<R>(
     }
 }
 
-fn return_html_parse_error<R>(whatever: &str) -> OperationResult<R> {
-    error!("unexpected branch: {}", whatever);
+fn html_parse_error_func<R>(arg: &str) -> OperationResult<R> {
+    error!("unexpected branch: {}", arg);
+    Err(OperationError::HtmlParseError)
+}
+
+fn html_parse_error_func_with_two_args<R>(arg1: &str, arg2: &str) -> OperationResult<R> {
+    error!("unexpected branch: {}", arg1);
+    error!("{}", arg2);
     Err(OperationError::HtmlParseError)
 }

@@ -34,8 +34,57 @@ pub mod parser {
         }
     }
 
+    pub fn parse_episode_page(html: &str, page_url: &str) -> OperationResult<SubtitleSearchResults> {
+        info!("parse episode page");
+
+        let document = Html::parse_fragment(html);
+
+        let title_selector = Selector::parse("h1").unwrap();
+
+        match document.select(&title_selector).next() {
+            Some(title_element) => {
+                let title = strip_html_tags(&title_element.inner_html());
+
+                let sanitized_title = title.replace(" subtitles ", " ");
+
+                let series_info_pattern = Regex::new(".*S(\\d{1,2})E(\\d{1,2}).*").unwrap();
+
+                let mut season = 0;
+                let mut episode = 0;
+
+                if series_info_pattern.is_match(&sanitized_title) {
+                    let groups = series_info_pattern.captures_iter(&sanitized_title)
+                                                                .next().unwrap();
+
+                    season = String::from(&groups[1]).parse()
+                                                    .expect("unable to parse season value");
+                    episode = String::from(&groups[2]).parse()
+                                                    .expect("unable to parse episode value");
+                }
+
+                let mut results: SubtitleSearchResults = Vec::new();
+
+                let item = SubtitleSearchResultItem {
+                    index: 1,
+                    title: sanitized_title,
+                    details_url: page_url.to_string(),
+                    season,
+                    episode
+                };
+
+                results.push(item);
+
+                Ok(results)
+            }
+            None => {
+                error!("unable to parse episode page, unsupported html");
+                Err(OperationError::HtmlParseError)
+            }
+        }
+    }
+
     pub fn parse_series_search_results(html: &str) -> OperationResult<SubtitleSearchResults> {
-        info!("parse search results from html");
+        info!("parse series search results from html");
         let mut results: SubtitleSearchResults = Vec::new();
 
         let document = Html::parse_fragment(html);
@@ -87,7 +136,8 @@ pub mod parser {
         }
     }
 
-    pub fn get_sub_download_url_from_page(html: &str) -> OptionResult<String> {
+    pub fn get_sub_download_url_from_page(html: &str, page_url: &str) -> OptionResult<String> {
+        debug!("page url '{}'", page_url);
         let result: OptionResult<String>;
 
         let a_element_selector = Selector::parse("a.bt-dwl.external").unwrap();
