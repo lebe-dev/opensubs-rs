@@ -11,7 +11,7 @@ mod search_tests {
         let client = get_client();
 
         match search_serial_episode(
-            &client, "https://www.opensubtitles.org",
+            &client, BASE_URL,
             "Midnight gospel", "rus", 1, 2
         ).await {
             Ok(results) =>
@@ -25,7 +25,7 @@ mod search_tests {
         let client = get_client();
 
         match search_serial_episode(
-            &client, "https://www.opensubtitles.org",
+            &client, BASE_URL,
             "Midnight gospel", "rus,eng", 1, 2
         ).await {
             Ok(results) => {
@@ -40,9 +40,9 @@ mod search_tests {
     async fn result_should_contain_relative_url() {
         let client = get_client();
 
-        match get_download_url_from_page(
-            &client, "https://www.opensubtitles.org/en/subtitles/8314554/midnight-sun-ko"
-        ).await {
+        let url = format!("{}/en/subtitles/8314554/midnight-sun-ko", BASE_URL);
+
+        match get_download_url_from_page(&client, &url).await {
             Ok(url) =>
                 assert_eq!(
                     "/en/subtitleserve/sub/8314554",
