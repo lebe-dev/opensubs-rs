@@ -2,9 +2,29 @@
 mod search_tests {
     use reqwest::Client;
 
-    use crate::{BASE_URL, get_download_url_from_page, search_serial_episode, search_serial_season};
+    use crate::{BASE_URL, get_download_url_from_page, search_by_mask, search_serial_episode, search_serial_season};
 
     const SEARCH_MASK: &str = "Midnight Gospel";
+
+    #[tokio::test]
+    async fn search_movie_with_multi_results() {
+        let client = get_client();
+
+        match search_by_mask(
+            &client, BASE_URL,
+            "tideland", "rus,eng"
+        ).await {
+            Ok(results) => {
+                println!("{:?}", results);
+                assert!(results.len() > 1);
+
+                let first_movie = results.get(0).unwrap();
+
+                assert_eq!("Tideland (2005)", first_movie.title);
+            },
+            Err(_) => panic!("search results expected")
+        }
+    }
 
     #[tokio::test]
     async fn search_serial_episode_with_one_result() {

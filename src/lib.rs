@@ -20,6 +20,20 @@ mod test_utils;
 /// Open subtitles site url
 pub const BASE_URL: &str = "https://www.opensubtitles.org";
 
+pub async fn search_by_mask(client: &reqwest::Client, base_url: &str,
+                            mask: &str, sub_langs: &str) -> OperationResult<SubtitleSearchResults> {
+    info!("search subtitles by mask '{}'", mask);
+    info!("- languages: '{}'", sub_langs);
+
+    let request_url = get_default_search_url(base_url, mask, sub_langs);
+
+    fetch_and_parse(
+        client, &request_url,
+        parse_series_search_results,
+        html_parse_error_func_with_two_args
+    ).await
+}
+
 pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
                                   mask: &str, sub_langs: &str, season: u8) ->
                                                           OperationResult<SubtitleSearchResults> {
@@ -59,6 +73,15 @@ pub async fn get_download_url_from_page(client: &reqwest::Client,
     fetch_and_parse(client, &page_url,
                     html_parse_error_func,
                     get_sub_download_url_from_page).await
+}
+
+fn get_default_search_url(base_url: &str, search_mask: &str, sub_langs: &str) -> String {
+    let sanitized_mask = search_mask.replace(" ", "+");
+
+    format!(
+        "{}/en/search/sublanguageid-{}/moviename-{}",
+        base_url, sub_langs, sanitized_mask
+    )
 }
 
 fn get_serial_season_search_url(base_url: &str, search_mask: &str,
