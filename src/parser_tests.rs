@@ -1,10 +1,5 @@
 #[cfg(test)]
 mod parser_tests {
-    use std::fs::File;
-    use std::io::Read;
-
-    use encoding::{DecoderTrap, Encoding};
-    use encoding::all::WINDOWS_1251;
     use log4rs::append::file::FileAppender;
     use log4rs::config::{Appender, Config, Logger, Root};
     use log4rs::encode::pattern::PatternEncoder;
@@ -12,6 +7,7 @@ mod parser_tests {
     use log::LevelFilter;
 
     use crate::parser::parser::{get_sub_download_url_from_page, parse_series_search_results};
+    use crate::test_utils::test_utils::get_html_content;
 
     #[test]
     fn results_should_contain_search_result_items() {
@@ -57,17 +53,6 @@ mod parser_tests {
             }
             Err(_) => panic!("results expected")
         }
-    }
-
-    fn get_html_content(filename: &str) -> String {
-        let file_path = format!("tests/{}", filename);
-        let mut file = File::open(file_path).expect("file not found");
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data).expect("unable to read sample file");
-
-        WINDOWS_1251.decode(&data, DecoderTrap::Strict)
-            .expect("unable to get sample html data")
     }
 
     fn get_logging_config(level: LevelFilter) -> Config {

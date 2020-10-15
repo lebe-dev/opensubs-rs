@@ -15,6 +15,7 @@ mod parser_tests;
 mod strip;
 mod strip_tests;
 mod search_tests;
+mod test_utils;
 
 /// Opensubtitles site url
 pub const BASE_URL: &str = "https://www.opensubtitles.org";
