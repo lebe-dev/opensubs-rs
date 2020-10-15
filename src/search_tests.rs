@@ -1,10 +1,8 @@
 #[cfg(test)]
 mod search_tests {
-    use log::LevelFilter;
     use reqwest::Client;
 
     use crate::{BASE_URL, get_download_url_from_page, search_serial_episode, search_serial_season};
-    use crate::test_utils::test_utils::get_logging_config;
 
     const SEARCH_MASK: &str = "Midnight Gospel";
 
@@ -51,9 +49,6 @@ mod search_tests {
 
     #[tokio::test]
     async fn result_should_contain_series_episode_search_results() {
-        let logging_config = get_logging_config(LevelFilter::Debug);
-        log4rs::init_config(logging_config).unwrap();
-
         let client = get_client();
 
         match search_serial_episode(&client, BASE_URL, SEARCH_MASK,
