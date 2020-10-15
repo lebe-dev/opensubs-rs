@@ -32,7 +32,7 @@ mod parser_tests {
     fn parse_sub_download_url_from_episode_page() {
         let logging_config = get_logging_config(LevelFilter::Debug);
         log4rs::init_config(logging_config).unwrap();
-        let content = get_html_content("episode-page.html");
+        let content = get_html_content("season-page.html");
 
         match get_sub_download_url_from_page(&content) {
             Ok(download_url) => {
