@@ -8,9 +8,9 @@ use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageT
 use crate::types::types::{OperationResult, OptionResult};
 
 pub mod domain;
+pub mod error;
+pub mod types;
 mod parser;
-mod error;
-mod types;
 mod parser_tests;
 mod strip;
 mod strip_tests;
