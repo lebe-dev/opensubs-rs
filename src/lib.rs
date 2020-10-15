@@ -105,39 +105,9 @@ pub async fn search_serial_season(client: &reqwest::Client, base_url: &str,
 }
 
 pub async fn get_download_url_from_page(client: &reqwest::Client,
-                                        base_url: &str, page_url: &str) -> OptionResult<String> {
+                                        page_url: &str) -> OptionResult<String> {
     info!("get subtitles download url from page '{}'", page_url);
-
-    match client.get(page_url).send().await {
-        Ok(resp) => {
-            let status: reqwest::StatusCode = resp.status();
-            debug!("server response code: {}", status.as_str());
-
-            if status == reqwest::StatusCode::OK {
-                match resp.text().await {
-                    Ok(response_text) => {
-                        trace!("---[SEARCH RESULTS]---");
-                        trace!("{}", &response_text);
-                        trace!("---[/SEARCH RESULTS]---");
-
-                        match get_sub_download_url_from_page(&response_text, base_url) {
-                            Ok(download_url) => Ok(download_url),
-                            Err(_) => Err(OperationError::Error)
-                        }
-                    }
-                    Err(e) => {
-                        error!("unable to get response text: {}", e);
-                        Err(OperationError::Error)
-                    }
-                }
-
-            } else { Err(OperationError::Error) }
-        }
-        Err(e) => {
-            error!("url get error: {}", e);
-            Err(OperationError::Error)
-        }
-    }
+    fetch_and_parse(client, &page_url, get_sub_download_url_from_page).await
 }
 
 fn get_serial_season_search_url(base_url: &str, search_mask: &str,

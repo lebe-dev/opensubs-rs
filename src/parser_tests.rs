@@ -34,16 +34,10 @@ mod parser_tests {
         log4rs::init_config(logging_config).unwrap();
         let content = get_html_content("episode-page.html");
 
-        let base_url = "https://www.opensubtitles.org";
-
-        match get_sub_download_url_from_page(&content, base_url) {
+        match get_sub_download_url_from_page(&content) {
             Ok(download_url) => {
                 match download_url {
-                    Some(url) => {
-                        assert_eq!(
-                            "https://www.opensubtitles.org/en/subtitleserve/sub/7863206", url
-                        );
-                    }
+                    Some(url) => assert_eq!("/en/subtitleserve/sub/7863206", url),
                     None => panic!("url expected")
                 }
             }

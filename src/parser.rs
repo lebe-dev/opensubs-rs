@@ -60,7 +60,7 @@ pub mod parser {
         }
     }
 
-    pub fn get_sub_download_url_from_page(html: &str, base_url: &str) -> OptionResult<String> {
+    pub fn get_sub_download_url_from_page(html: &str) -> OptionResult<String> {
         let result: OptionResult<String>;
 
         let a_element_selector = Selector::parse("a.bt-dwl.external").unwrap();
@@ -71,8 +71,7 @@ pub mod parser {
             Some(a_element) => {
                 match a_element.value().attr("href") {
                     Some(href) => {
-                        let url = format!("{}{}", base_url, href);
-                        result = Ok(Some(url))
+                        result = Ok(Some(href.to_string()))
                     }
                     None => {
                         warn!("<a> tag doesn't have 'href' attribute. unexpected html");
