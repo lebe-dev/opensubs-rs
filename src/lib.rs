@@ -7,7 +7,7 @@ use crate::error::error::OperationError;
 use crate::parser::parser::{get_page_type, get_sub_download_url_from_page, PageType, parse_episode_page, parse_series_search_results};
 use crate::types::types::{OperationResult, OptionResult};
 
-mod domain;
+pub mod domain;
 mod parser;
 mod error;
 mod types;
