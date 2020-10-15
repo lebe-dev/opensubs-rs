@@ -6,16 +6,17 @@ mod search_tests {
     use crate::{BASE_URL, get_download_url_from_page, search_serial_episode, search_serial_season};
     use crate::test_utils::test_utils::get_logging_config;
 
+    const SEARCH_MASK: &str = "Midnight Gospel";
+
     #[tokio::test]
     async fn search_serial_episode_with_one_result() {
         let client = get_client();
 
         match search_serial_episode(
             &client, BASE_URL,
-            "Midnight gospel", "rus", 1, 2
+            SEARCH_MASK, "rus", 1, 2
         ).await {
-            Ok(results) =>
-                assert_eq!(1, results.len()),
+            Ok(results) => assert_eq!(1, results.len()),
             Err(_) => panic!("search results expected")
         }
     }
@@ -26,7 +27,7 @@ mod search_tests {
 
         match search_serial_episode(
             &client, BASE_URL,
-            "Midnight gospel", "rus,eng", 1, 2
+            SEARCH_MASK, "rus,eng", 1, 2
         ).await {
             Ok(results) => {
                 println!("{:?}", results);
@@ -43,11 +44,7 @@ mod search_tests {
         let url = format!("{}/en/subtitles/8314554/midnight-sun-ko", BASE_URL);
 
         match get_download_url_from_page(&client, &url).await {
-            Ok(url) =>
-                assert_eq!(
-                    "/en/subtitleserve/sub/8314554",
-                    url.unwrap()
-                ),
+            Ok(url) => assert_eq!("/en/subtitleserve/sub/8314554", url.unwrap()),
             Err(_) => panic!("search results expected")
         }
     }
@@ -59,8 +56,8 @@ mod search_tests {
 
         let client = get_client();
 
-        match search_serial_episode(&client, BASE_URL,
-                                   "Midnight Gospel", "rus", 1, 2).await {
+        match search_serial_episode(&client, BASE_URL, SEARCH_MASK,
+                                    "rus", 1, 2).await {
             Ok(search_results) => {
                 assert!(search_results.len() > 0);
                 println!("{:?}", &search_results);
@@ -74,7 +71,7 @@ mod search_tests {
         let client = get_client();
 
         match search_serial_season(&client, BASE_URL,
-                                   "Midnight Gospel", "rus", 1).await {
+                                   SEARCH_MASK, "rus", 1).await {
             Ok(search_results) => {
                 assert!(search_results.len() > 0);
                 println!("{:?}", &search_results);
