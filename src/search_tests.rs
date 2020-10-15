@@ -2,8 +2,11 @@
 mod search_tests {
     use log::LevelFilter;
 
-    use crate::{BASE_URL, login, search_by_mask};
+    use crate::{BASE_URL, login, search_serial_season};
     use crate::test_utils::test_utils::get_logging_config;
+
+    const LOGIN: &str = "CHANGE-ME";
+    const PASSWORD: &str = "CHANGE-ME";
 
     #[ignore]
     #[tokio::test]
@@ -19,10 +22,10 @@ mod search_tests {
             .unwrap();
 
         match login(&client, BASE_URL,
-                    "CHANGE-ME", "CHANGE-ME").await {
+                    LOGIN, PASSWORD).await {
             Ok(_) => {
-                match search_by_mask(&client, BASE_URL,
-                                     "Midnight Gospel", "rus").await {
+                match search_serial_season(&client, BASE_URL,
+                                     "Midnight Gospel", "rus", 1).await {
                     Ok(search_results) => {
                         assert!(search_results.len() > 0);
                         println!("{:?}", &search_results);
